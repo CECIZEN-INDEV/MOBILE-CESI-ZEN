@@ -2,6 +2,7 @@
   "expo": {
     "name": "CesiZenMobile",
     "slug": "CesiZenMobile",
+    "scheme": "CesiZenMobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,13 +14,15 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.CesiZenMobile"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.anonymous.CesiZenMobile"
     },
     "web": {
       "favicon": "./assets/favicon.png"
