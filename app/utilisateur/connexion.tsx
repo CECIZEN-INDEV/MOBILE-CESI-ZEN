@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  Alert,
+} from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../hooks/useAuth";
 
@@ -9,15 +17,31 @@ const Connexion: React.FC = () => {
   const [error, setError] = useState<string>("");
 
   const router = useRouter();
-  const { login, isAuthenticated } = useAuth();
+  const { login, checkToken, isAuthenticated } = useAuth();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push("/utilisateur/home");
-    }
-  }, [isAuthenticated]);
+    let isCheck = true;
 
-  function checkInput(email: string, motDePasse: string): boolean {
+    (async () => {
+      if (!isAuthenticated) {
+        const isValid = await checkToken();
+        if (isCheck) {
+          setLoading(false);
+          if (isValid) router.push("/utilisateur/home");
+        }
+      } else {
+        setLoading(false);
+        router.push("/utilisateur/home");
+      }
+    })();
+
+    return () => {
+      isCheck = false;
+    };
+  }, []);
+
+  const checkInput = (): boolean => {
     if (!email || !motDePasse) {
       setError("Veuillez remplir tous les champs.");
       return false;
@@ -26,24 +50,14 @@ const Connexion: React.FC = () => {
       setError("Veuillez entrer un email valide.");
       return false;
     }
-    if (!email) {
-      setError("Veuillez entrer un email.");
-      return false;
-    }
-    if (!motDePasse) {
-      setError("Veuillez entrer un mot de passe.");
-      return false;
-    }
     return true;
-  }
+  };
 
   const handleSubmit = async () => {
-    if (!checkInput(email, motDePasse)) {
-      return;
-    }
+    if (!checkInput()) return;
+
     try {
       await login(email, motDePasse);
-      console.log("Login success, redirecting…");
       router.push("/utilisateur/home");
     } catch (err: any) {
       setError(err.message);
@@ -51,9 +65,12 @@ const Connexion: React.FC = () => {
     }
   };
 
+  if (loading) return <Text>Chargement...</Text>;
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Connexion</Text>
+      <Image source={require("../../assets/cesizen.png")} style={styles.logo} />
+
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -62,6 +79,7 @@ const Connexion: React.FC = () => {
         onChangeText={setEmail}
         autoCapitalize="none"
       />
+
       <TextInput
         style={styles.input}
         placeholder="Mot de passe"
@@ -69,38 +87,76 @@ const Connexion: React.FC = () => {
         value={motDePasse}
         onChangeText={setMotDePasse}
       />
+
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      <Button title="Se connecter" onPress={handleSubmit} />
+
+      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+        <Text style={styles.buttonText}>Connexion</Text>
+      </TouchableOpacity>
+
+      <View style={styles.register}>
+        <Text>Vous n'avez pas de compte ?</Text>
+        <TouchableOpacity onPress={() => router.push("/inscription")}>
+          <Text style={styles.link}>Inscription</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    padding: 16,
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingTop: 50,
     backgroundColor: "#fff",
   },
-  title: {
-    fontSize: 24,
-    marginBottom: 20,
-    textAlign: "center",
-    color: "#333",
+  logo: {
+    width: 260,
+    height: 260,
+    resizeMode: "contain",
+    marginBottom: 40,
+  },
+  inputContainer: {
+    flex: 1,
+    width: "100%",
+    justifyContent: "center",
   },
   input: {
+    width: "100%",
     borderWidth: 1,
-    borderColor: "#ccc",
-    marginBottom: 12,
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: "#f9f9f9",
+    borderColor: "#ddd",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 15,
     fontSize: 16,
+    backgroundColor: "#f7f7f7",
+  },
+  button: {
+    width: "100%",
+    backgroundColor: "#4CAF50",
+    padding: 15,
+    borderRadius: 10,
+    alignItems: "center",
+    marginVertical: 10,
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 16,
+  },
+  link: {
+    color: "#000",
+    textDecorationLine: "underline",
+    marginTop: 10,
+    textAlign: "center",
   },
   error: {
     color: "red",
     marginBottom: 12,
     textAlign: "center",
+  },
+  register: {
+    marginTop: 40,
   },
 });
 

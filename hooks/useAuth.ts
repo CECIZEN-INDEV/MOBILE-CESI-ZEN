@@ -1,5 +1,5 @@
-import { useCallback } from "react";
-import { useLocalStorage } from "./useLocalStorage";
+import { useCallback, useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { login as loginService } from "../services/userService";
 import { Utilisateur, LoginResponse } from "../interfaces/Utilisateur";
 
@@ -9,38 +9,49 @@ interface AuthState {
 }
 
 export function useAuth() {
-  const [authState, setAuthState] = useLocalStorage<AuthState | null>(
-    "auth",
-    null
-  );
+  const [authState, setAuthState] = useState<AuthState | null>(null);
+
+  // Charger le token
+  useEffect(() => {
+    (async () => {
+      const storedAuthState = await AsyncStorage.getItem("auth");
+      if (storedAuthState) {
+        setAuthState(JSON.parse(storedAuthState));
+      }
+    })();
+  }, []);
 
   // Connexion
-  const login = useCallback(
-    async (email: string, mot_de_passe: string) => {
-      const data: LoginResponse = await loginService(email, mot_de_passe);
-      setAuthState({
-        token: data.token,
-        utilisateur: data.utilisateur,
-      });
-    },
-    [setAuthState]
-  );
+  const login = useCallback(async (email: string, mot_de_passe: string) => {
+    const data: LoginResponse = await loginService(email, mot_de_passe);
+    const newAuthState = {
+      token: data.token,
+      utilisateur: data.utilisateur,
+    };
+    await AsyncStorage.setItem("auth", JSON.stringify(newAuthState));
+    setAuthState(newAuthState);
+  }, []);
 
   // Déconnexion
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    await AsyncStorage.removeItem("auth");
     setAuthState(null);
-  }, [setAuthState]);
+  }, []);
 
   // Vérifier la validité du token
   const checkToken = useCallback(async () => {
-    const storedAuthState = localStorage.getItem("auth");
+    const storedAuthState = await AsyncStorage.getItem("auth");
+
     if (!storedAuthState) {
       return false;
     }
+
     const authState = JSON.parse(storedAuthState) as AuthState;
+
     if (!authState?.token) {
       return false;
     }
+
     try {
       const response = await fetch(
         "http://localhost:3000/utilisateur/checkToken",
@@ -52,15 +63,15 @@ export function useAuth() {
       );
 
       if (response.status !== 200) {
-        logout();
+        await logout();
         return false;
       }
       return true;
     } catch (error) {
-      console.error("Erreur lors de la vérification du token :", error);
       return false;
     }
-  }, [authState, logout]);
+  }, [logout]);
+
   const isAuthenticated = !!authState?.token;
 
   return {
