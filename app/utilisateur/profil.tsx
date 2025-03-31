@@ -1,4 +1,3 @@
-// app/home.tsx (ou le chemin équivalent)
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -10,18 +9,17 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../hooks/useAuth";
-import useInformations from "../../components/Informations";
 import BottomNavBar from "../../components/BottomNavBar";
 
-const HomePage: React.FC = () => {
+const ProfilPage: React.FC = () => {
+  const { authState } = useAuth();
+  const utilisateur = authState?.utilisateur;
   const router = useRouter();
-  const { authState, isAuthenticated, checkToken } = useAuth();
+  const { checkToken, isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(true);
-  const informations = useInformations();
 
   useEffect(() => {
     let isCheck = true;
-
     (async () => {
       if (!isAuthenticated) {
         const isValid = await checkToken();
@@ -51,39 +49,32 @@ const HomePage: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.logo}>CesiZen</Text>
+        <Text style={styles.title}>Profil</Text>
 
-        <TouchableOpacity
-          style={styles.emotionButton}
-          onPress={() => router.push("/emotion/add")}
-        >
-          <Text style={styles.emotionText}>
-            Que ressentez-vous aujourd'hui ?
-          </Text>
-        </TouchableOpacity>
-
-        <Text style={styles.title}>Information du jour</Text>
-
-        <ScrollView style={styles.scrollView}>
-          {informations.map((info) => (
-            <View key={info.id} style={styles.informationContainer}>
-              <Text style={styles.informationTitle}>{info.titre}</Text>
-              <Text style={styles.informationDescription}>{info.contenu}</Text>
-              <Text style={styles.informationDate}>
-                {new Date(info.created_at).toLocaleDateString()}
-              </Text>
+        {utilisateur ? (
+          <View style={styles.profileBoxContainer}>
+            <View style={styles.box}>
+              <Text style={styles.boxText}>{utilisateur.nom}</Text>
             </View>
-          ))}
-        </ScrollView>
-      </View>
-
+            <View style={styles.box}>
+              <Text style={styles.boxText}>{utilisateur.prenom}</Text>
+            </View>
+            <View style={styles.box}>
+              <Text style={styles.boxText}>{utilisateur.email}</Text>
+            </View>
+          </View>
+        ) : (
+          <Text style={styles.info}>
+            Aucune information utilisateur disponible.
+          </Text>
+        )}
+      </ScrollView>
       <BottomNavBar />
     </SafeAreaView>
   );
 };
-
-export default HomePage;
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -98,7 +89,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 40,
     alignItems: "center",
     backgroundColor: "#fff",
   },
@@ -106,7 +97,6 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: "bold",
     color: "#4CAF50",
-    marginVertical: 20,
   },
   logoZen: {
     color: "#4CAF50",
@@ -156,41 +146,32 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginLeft: 8,
   },
-  emotionButton: {
-    backgroundColor: "#4CAF50",
+  // Styles supplémentaires pour le profil
+  profileBoxContainer: {
     width: "100%",
-    padding: 15,
-    borderRadius: 10,
     alignItems: "center",
-    marginBottom: 20,
   },
-  emotionText: {
+  box: {
+    width: "90%",
+    paddingVertical: 18,
+    paddingHorizontal: 25,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    marginTop: 8,
+    backgroundColor: "#f9f9f9",
+    alignItems: "center",
+  },
+  boxText: {
     fontSize: 18,
-    color: "#fff",
-    fontWeight: "bold",
-    marginLeft: 8,
-  },
-  scrollView: {
-    width: "100%",
-  },
-  informationContainer: {
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderColor: "#ddd",
-    width: "100%",
-  },
-  informationTitle: {
-    fontSize: 16,
-    fontWeight: "600",
     color: "#555",
   },
-  informationDescription: {
-    fontSize: 14,
-    color: "#777",
-    marginVertical: 5,
-  },
-  informationDate: {
-    fontSize: 12,
-    color: "#999",
+  info: {
+    fontSize: 18,
+    color: "#666",
+    marginTop: 20,
+    textAlign: "center",
   },
 });
+
+export default ProfilPage;
