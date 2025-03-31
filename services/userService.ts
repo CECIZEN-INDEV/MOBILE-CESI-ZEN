@@ -1,5 +1,4 @@
-// services/userService.ts
-import { LoginResponse } from "../interfaces/Utilisateur"; // Ajustez le chemin si besoin
+import { LoginResponse } from "../interfaces/Utilisateur";
 
 export const login = async (
   email: string,
@@ -12,15 +11,15 @@ export const login = async (
     },
     body: JSON.stringify({ email, mot_de_passe }),
   });
-
+  if (response.status === 401) {
+    throw new Error("Email ou mot de passe incorrect.");
+  }
   if (!response.ok) {
     const errorData = await response.json();
-    console.error("Error response data:", errorData);
     throw new Error(errorData.message || "Erreur lors de la connexion");
   }
 
   const data: LoginResponse = await response.json();
-  console.log("Response data:", data);
 
   return data;
 };

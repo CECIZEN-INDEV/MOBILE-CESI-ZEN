@@ -6,22 +6,16 @@ import {
   StyleSheet,
   ScrollView,
   TextInput,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { AuthState } from "../../interfaces/AuthState";
 import { useAuth } from "../../hooks/useAuth";
-import { useRouter } from "expo-router";
-import {
-  JournalEmotion,
-  EmotionBase,
-  EmotionAvance,
-} from "../../interfaces/Emotion";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { EmotionBase, EmotionAvance } from "../../interfaces/Emotion";
 
-const EditEmotionScreen: React.FC = () => {
-  const { id } = useLocalSearchParams();
-  const [journal, setJournal] = useState<JournalEmotion | null>(null);
+const AddEmotionScreen: React.FC = () => {
+  const { date } = useLocalSearchParams(); // Récupère la date sélectionnée
   const [emotionBase, setEmotionBase] = useState<EmotionBase | null>(null);
   const [emotionAvance, setEmotionAvance] = useState<EmotionAvance | null>(
     null
@@ -32,99 +26,40 @@ const EditEmotionScreen: React.FC = () => {
   );
   const [showBaseList, setShowBaseList] = useState(false);
   const [showAvanceList, setShowAvanceList] = useState(false);
+  const [commentaire, setCommentaire] = useState("");
+
   const { authState, isAuthenticated, checkToken } = useAuth();
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    let isCheck = true;
-
     (async () => {
       if (!isAuthenticated) {
         const isValid = await checkToken();
-        if (isCheck) {
-          setLoading(false);
-          if (!isValid) {
-            router.push("/utilisateur/connexion");
-            return;
-          }
+        if (!isValid) {
+          router.push("/utilisateur/connexion");
+          return;
         }
-      } else {
-        setLoading(false);
       }
 
       try {
         const storedAuthState = await AsyncStorage.getItem("auth");
         if (!storedAuthState) return;
 
-        const authState = JSON.parse(storedAuthState) as AuthState;
+        const authState = JSON.parse(storedAuthState);
         if (!authState?.token) return;
 
-        // Récupération du journal
-        const resJournal = await fetch(
-          `http://localhost:3000/journal-emotion/${id}`,
-          {
-            headers: { Authorization: `Bearer ${authState.token}` },
-          }
-        );
-        if (!resJournal.ok) throw new Error("Failed to fetch journal");
-        const dataJournal = await resJournal.json();
-        setJournal(dataJournal);
-
-        // Récupération des émotions de base
         const resAllBase = await fetch(`http://localhost:3000/emotions-base`, {
           headers: { Authorization: `Bearer ${authState.token}` },
         });
+
         if (!resAllBase.ok) throw new Error("Failed to fetch base emotions");
         const allBase = await resAllBase.json();
         setAllEmotionsBase(allBase);
-
-        // Sélection de l'émotion de base et chargement de ses émotions avancées
-        if (dataJournal.emotion_base_id) {
-          const selectedBaseEmotion = allBase.find(
-            (e: { id: any }) => e.id === dataJournal.emotion_base_id
-          );
-          if (selectedBaseEmotion) {
-            await handleSelectBaseEmotion(selectedBaseEmotion);
-          }
-        }
       } catch (error) {
         console.error("Erreur lors du chargement des émotions :", error);
       }
     })();
-
-    return () => {
-      isCheck = false;
-    };
-  }, [id, isAuthenticated, checkToken, router]);
-
-  const updateJournalEmotion = async () => {
-    try {
-      const storedAuthState = await AsyncStorage.getItem("auth");
-      if (!storedAuthState) return;
-
-      const authState = JSON.parse(storedAuthState) as AuthState;
-      const res = await fetch(`http://localhost:3000/journal-emotion/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authState.token}`,
-        },
-        body: JSON.stringify({
-          commentaire: journal?.commentaire,
-          emotion_base_id: emotionBase?.id,
-          emotion_avance_id: emotionAvance?.id,
-        }),
-      });
-
-      if (!res.ok) throw new Error("Failed to update journal emotion");
-      alert("Journal mis à jour avec succès !");
-      router.push("/utilisateur/home");
-    } catch (error) {
-      console.error("Erreur lors de la mise à jour du journal :", error);
-      alert("Erreur lors de la mise à jour du journal.");
-    }
-  };
+  }, [isAuthenticated, checkToken, router]);
 
   // Fonction pour sélectionner une émotion de base et charger ses émotions avancées
   const handleSelectBaseEmotion = async (selectedEmotion: EmotionBase) => {
@@ -135,17 +70,18 @@ const EditEmotionScreen: React.FC = () => {
       const storedAuthState = await AsyncStorage.getItem("auth");
       if (!storedAuthState) return;
 
-      const authState = JSON.parse(storedAuthState) as AuthState;
+      const authState = JSON.parse(storedAuthState);
       const resAvance = await fetch(
         `http://localhost:3000/emotions-avancees/emotion/${selectedEmotion.id}`,
         {
-          headers: { Authorization: `Bearer ${authState?.token}` },
+          headers: { Authorization: `Bearer ${authState.token}` },
         }
       );
 
+      if (!resAvance.ok) throw new Error("Failed to fetch advanced emotions");
       const allAvance = await resAvance.json();
       setAllEmotionsAvance(allAvance);
-      setEmotionAvance(null);
+      setEmotionAvance(null); // Réinitialiser l'émotion avancée
     } catch (error) {
       console.error("Erreur lors du chargement des émotions avancées :", error);
     }
@@ -157,15 +93,53 @@ const EditEmotionScreen: React.FC = () => {
     setShowAvanceList(false);
   };
 
-  if (!journal) {
-    return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.loadingContainer}>
-          <Text>Chargement...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toISOString();
+  };
+
+  const addEmotion = async () => {
+    try {
+      const storedAuthState = await AsyncStorage.getItem("auth");
+      if (!storedAuthState) return;
+
+      let selectedDate = date
+        ? formatDate(date.toString())
+        : new Date().toISOString();
+
+      const authState = JSON.parse(storedAuthState);
+
+      const res = await fetch(`http://localhost:3000/journal-emotion`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authState.token}`,
+        },
+        body: JSON.stringify({
+          utilisateur_id: authState.utilisateur.id,
+          commentaire,
+          emotion_base_id: emotionBase?.id,
+          emotion_avance_id: emotionAvance?.id,
+          date_enregistrement: selectedDate,
+        }),
+      });
+
+      if (res.status === 409) {
+        Alert.alert(
+          "Malheureusement...",
+          "Une émotion a déjà été enregistrée pour cette date.",
+          [{ text: "OK" }]
+        );
+        return;
+      }
+      if (!res.ok) throw new Error("Failed to add journal emotion");
+      alert("Journal ajouté avec succès !");
+      router.push("/utilisateur/home");
+    } catch (error) {
+      console.error("Erreur lors de l'ajout du journal :", error);
+      alert("Erreur lors de l'ajout du journal.");
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -175,16 +149,12 @@ const EditEmotionScreen: React.FC = () => {
           Cesi<Text style={styles.logoZen}>Zen</Text>
         </Text>
 
-        {/* Date du journal */}
+        {/* Affichage de la date sélectionnée */}
         <Text style={styles.date}>
-          {new Date(journal.date_enregistrement).toLocaleDateString("fr-FR", {
-            day: "2-digit",
-            month: "long",
-            year: "numeric",
-          })}
+          {date ? date.toString() : "Sélectionne une date"}
         </Text>
 
-        {/* Émotion de base */}
+        {/* Sélection de l'émotion de base */}
         <Text style={styles.label}>Émotion de base</Text>
         <TouchableOpacity
           style={styles.box}
@@ -209,7 +179,7 @@ const EditEmotionScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Émotion avancée */}
+        {/* Sélection de l'émotion avancée */}
         <Text style={styles.label}>Émotion avancée</Text>
         <TouchableOpacity
           style={styles.box}
@@ -239,40 +209,30 @@ const EditEmotionScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Commentaire */}
+        {/* Zone de saisie du commentaire */}
         <Text style={styles.label}>Commentaire</Text>
         <TextInput
           style={styles.comment}
-          value={journal.commentaire}
-          onChangeText={(text) =>
-            setJournal((prev) => (prev ? { ...prev, commentaire: text } : null))
-          }
+          value={commentaire}
+          onChangeText={setCommentaire}
           multiline
         />
 
-        {/* Bouton d'enregistrement */}
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={updateJournalEmotion}
-        >
-          <Text style={styles.saveButtonText}>Enregistrer</Text>
+        {/* Bouton d'ajout */}
+        <TouchableOpacity style={styles.saveButton} onPress={addEmotion}>
+          <Text style={styles.saveButtonText}>Ajouter</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
 };
 
-export default EditEmotionScreen;
+export default AddEmotionScreen;
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: "#fff",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
   },
   container: {
     flex: 1,
@@ -310,16 +270,20 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 8,
     textAlign: "center",
+    color: "#333",
+    fontSize: 18,
   },
   comment: {
     width: "100%",
-    padding: 18,
+    paddingVertical: 18,
+    paddingHorizontal: 25,
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
     marginTop: 8,
     fontSize: 16,
     color: "#555",
+    lineHeight: 22,
   },
   dropdown: {
     width: "100%",
@@ -342,7 +306,6 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
+    fontSize: 16,
   },
 });

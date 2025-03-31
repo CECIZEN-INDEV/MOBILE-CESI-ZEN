@@ -1,12 +1,13 @@
-// emotion/calendar.tsx
 import React, { useEffect, useState } from "react";
-import { View, StyleSheet, Text } from "react-native";
+import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Calendar } from "react-native-calendars";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../hooks/useAuth";
 import { JournalEmotion } from "../../interfaces/Emotion";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AuthState } from "../../interfaces/AuthState";
+import BottomNavBar from "../../components/BottomNavBar";
 
 const CalendarScreen: React.FC = () => {
   const router = useRouter();
@@ -31,7 +32,6 @@ const CalendarScreen: React.FC = () => {
         }
       );
       const data = await res.json();
-      //console.log(data);
       setJournals(data);
     } catch (error) {
       console.error(error);
@@ -52,7 +52,9 @@ const CalendarScreen: React.FC = () => {
           setLoading(false);
           if (!isValid) router.push("/utilisateur/connexion");
         }
-      } else setLoading(false);
+      } else {
+        setLoading(false);
+      }
     })();
 
     return () => {
@@ -62,20 +64,21 @@ const CalendarScreen: React.FC = () => {
 
   if (loading || !authState) {
     return (
-      <View style={styles.container}>
-        <Text>Vérification du token en cours...</Text>
-      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.loadingContainer}>
+          <Text>Vérification du token en cours...</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
-  // Utilisation de customStyles pour avoir la date en rouge
   const markedDates = Array.isArray(journals)
     ? journals.reduce((acc, journal) => {
         const date = journal.date_enregistrement.split("T")[0];
         acc[date] = {
           customStyles: {
             container: {
-              backgroundColor: "red",
+              backgroundColor: "#C8E6C9",
             },
             text: {
               color: "white",
@@ -95,25 +98,85 @@ const CalendarScreen: React.FC = () => {
       router.push({ pathname: "/emotion/details", params: { id: journal.id } });
     } else {
       router.push({
-        pathname: "/emotion/edit",
+        pathname: "/emotion/add",
         params: { date: day.dateString },
       });
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Calendar
-        onDayPress={handleDayPress}
-        markedDates={markedDates}
-        markingType="custom"
-      />
-    </View>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <Text style={styles.logo}>CesiZen</Text>
+        <Text style={styles.title}>Calendrier</Text>
+
+        <Calendar
+          style={styles.calendar}
+          onDayPress={handleDayPress}
+          markedDates={markedDates}
+          markingType="custom"
+        />
+
+        <TouchableOpacity
+          style={styles.exportButton}
+          onPress={() => router.push("/emotion/report")}
+        >
+          <Text style={styles.exportButtonText}>Exporter vos informations</Text>
+        </TouchableOpacity>
+      </View>
+      <BottomNavBar />
+    </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, paddingTop: 50, backgroundColor: "#fff" },
-});
-
 export default CalendarScreen;
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  container: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 40,
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
+  logo: {
+    fontSize: 36,
+    fontWeight: "bold",
+    color: "#4CAF50",
+  },
+  title: {
+    fontSize: 22,
+    color: "#333",
+    marginVertical: 20,
+    fontWeight: "600",
+  },
+  calendar: {
+    width: "100%",
+    aspectRatio: 1,
+    marginBottom: 20,
+  },
+  exportButton: {
+    flexDirection: "row",
+    backgroundColor: "#4CAF50",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 20,
+  },
+  exportButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginLeft: 8,
+  },
+});
