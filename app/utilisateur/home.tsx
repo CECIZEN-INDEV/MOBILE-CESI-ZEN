@@ -172,6 +172,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     width: "100%",
+    maxHeight: "60%",
   },
   informationContainer: {
     paddingVertical: 10,
