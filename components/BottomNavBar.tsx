@@ -71,6 +71,7 @@ const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
     marginBottom: 40,
+    backgroundColor: "#FFFFFF",
   },
 
   navBar: {

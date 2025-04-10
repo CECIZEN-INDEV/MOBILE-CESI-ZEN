@@ -10,22 +10,25 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../hooks/useAuth";
 import BottomNavBar from "../../components/BottomNavBar";
+import { Ionicons } from "@expo/vector-icons";
 
 const ProfilPage: React.FC = () => {
-  const { authState } = useAuth();
+  const { authState, checkToken, isAuthenticated } = useAuth();
   const utilisateur = authState?.utilisateur;
   const router = useRouter();
-  const { checkToken, isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isCheck = true;
+
     (async () => {
       if (!isAuthenticated) {
         const isValid = await checkToken();
         if (isCheck) {
           setLoading(false);
-          if (!isValid) router.push("/utilisateur/connexion");
+          if (!isValid) {
+            router.push("/utilisateur/connexion");
+          }
         }
       } else {
         setLoading(false);
@@ -54,17 +57,32 @@ const ProfilPage: React.FC = () => {
         <Text style={styles.title}>Profil</Text>
 
         {utilisateur ? (
-          <View style={styles.profileBoxContainer}>
-            <View style={styles.box}>
-              <Text style={styles.boxText}>{utilisateur.nom}</Text>
+          <>
+            <View style={styles.profileBoxContainer}>
+              <View style={styles.box}>
+                <Text style={styles.boxText}>{utilisateur.nom}</Text>
+              </View>
+              <View style={styles.box}>
+                <Text style={styles.boxText}>{utilisateur.prenom}</Text>
+              </View>
+              <View style={styles.box}>
+                <Text style={styles.boxText}>{utilisateur.email}</Text>
+              </View>
             </View>
-            <View style={styles.box}>
-              <Text style={styles.boxText}>{utilisateur.prenom}</Text>
-            </View>
-            <View style={styles.box}>
-              <Text style={styles.boxText}>{utilisateur.email}</Text>
-            </View>
-          </View>
+
+            <TouchableOpacity
+              style={styles.updateButton}
+              onPress={() =>
+                router.push({
+                  pathname: "/utilisateur/profilUpdate",
+                  params: { id: utilisateur.id },
+                })
+              }
+            >
+              <Ionicons name="create-outline" size={22} color="#fff" />
+              <Text style={styles.updateText}>Modification Profil</Text>
+            </TouchableOpacity>
+          </>
         ) : (
           <Text style={styles.info}>
             Aucune information utilisateur disponible.
@@ -171,6 +189,21 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 20,
     textAlign: "center",
+  },
+  updateButton: {
+    flexDirection: "row",
+    backgroundColor: "#4CAF50",
+    paddingVertical: 10,
+    paddingHorizontal: 25,
+    borderRadius: 8,
+    marginTop: 20,
+    alignItems: "center",
+  },
+  updateText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginLeft: 8,
   },
 });
 

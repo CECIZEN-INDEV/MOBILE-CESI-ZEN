@@ -38,6 +38,14 @@ export function useAuth() {
     setAuthState(null);
   }, []);
 
+  // Mettre à jour l'utilisateur
+  const updateUtilisateur = (nouvelUtilisateur: Utilisateur) => {
+    if (!authState) return;
+    const newAuth = { ...authState, utilisateur: nouvelUtilisateur };
+    setAuthState(newAuth);
+    AsyncStorage.setItem("auth", JSON.stringify(newAuth)); // 🔒 Update aussi dans le stockage local
+  };
+
   // Vérifier la validité du token
   const checkToken = useCallback(async () => {
     const storedAuthState = await AsyncStorage.getItem("auth");
@@ -80,5 +88,6 @@ export function useAuth() {
     login,
     logout,
     checkToken,
+    updateUtilisateur,
   };
 }
