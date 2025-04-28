@@ -96,7 +96,9 @@ const Connexion: React.FC = () => {
 
       <View style={styles.register}>
         <Text>Vous n'avez pas de compte ?</Text>
-        <TouchableOpacity onPress={() => router.push("/inscription")}>
+        <TouchableOpacity
+          onPress={() => router.push("/utilisateur/inscription")}
+        >
           <Text style={styles.link}>Inscription</Text>
         </TouchableOpacity>
       </View>
