@@ -13,6 +13,7 @@ import { useLocalSearchParams } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "../../hooks/useAuth";
 import { useRouter } from "expo-router";
+import BottomNavBar from "../../components/BottomNavBar";
 
 const profilUpdate: React.FC = () => {
   const { id } = useLocalSearchParams();
@@ -157,6 +158,7 @@ const profilUpdate: React.FC = () => {
           <Text style={styles.saveButtonText}>Mettre à jour</Text>
         </TouchableOpacity>
       </ScrollView>
+      <BottomNavBar />
     </SafeAreaView>
   );
 };

@@ -11,8 +11,15 @@ const BottomNavBar = () => {
   const pathname = usePathname();
 
   // On détecte les pages
-  const isHome = pathname === "/utilisateur/home";
-  const isCalendar = pathname === "/emotion/calendar";
+  const isHome =
+    pathname === "/utilisateur/home" ||
+    pathname.startsWith("/information/detail");
+  const isCalendar =
+    pathname === "/emotion/calendar" ||
+    pathname === "/emotion/add" ||
+    pathname === "/emotion/report" ||
+    pathname === "/emotion/edit" ||
+    pathname === "/emotion/details";
   const isProfil = pathname === "/utilisateur/profil";
 
   const handleNavigation = (targetPath: string) => {

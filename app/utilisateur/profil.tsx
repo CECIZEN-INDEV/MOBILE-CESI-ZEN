@@ -105,6 +105,18 @@ const ProfilPage: React.FC = () => {
               <Text style={styles.updateText}>Modification Profil</Text>
             </TouchableOpacity>
             <TouchableOpacity
+              style={styles.updateButton}
+              onPress={() =>
+                router.push({
+                  pathname: "/utilisateur/modificationMotdepasse",
+                  params: { id: utilisateur.id },
+                })
+              }
+            >
+              <Ionicons name="lock-closed-outline" size={22} color="#fff" />
+              <Text style={styles.updateText}>Modification MDP</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               style={styles.deleteButton}
               onPress={() =>
                 Alert.alert(
@@ -127,7 +139,7 @@ const ProfilPage: React.FC = () => {
               style={styles.deleteButton}
               onPress={async () => {
                 await AsyncStorage.removeItem("auth");
-                router.push("/utilisateur/connexion");
+                router.push("/utilisateur/home");
               }}
             >
               <Ionicons name="log-out-outline" size={22} color="#fff" />

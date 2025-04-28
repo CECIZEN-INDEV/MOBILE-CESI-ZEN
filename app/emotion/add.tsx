@@ -13,6 +13,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "../../hooks/useAuth";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { EmotionBase, EmotionAvance } from "../../interfaces/Emotion";
+import BottomNavBar from "../../components/BottomNavBar";
 
 const AddEmotionScreen: React.FC = () => {
   const { date } = useLocalSearchParams(); // Récupère la date sélectionnée
@@ -223,6 +224,7 @@ const AddEmotionScreen: React.FC = () => {
           <Text style={styles.saveButtonText}>Ajouter</Text>
         </TouchableOpacity>
       </ScrollView>
+      <BottomNavBar />
     </SafeAreaView>
   );
 };

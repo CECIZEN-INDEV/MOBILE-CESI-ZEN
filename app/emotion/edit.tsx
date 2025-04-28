@@ -18,6 +18,7 @@ import {
   EmotionBase,
   EmotionAvance,
 } from "../../interfaces/Emotion";
+import BottomNavBar from "../../components/BottomNavBar";
 
 const EditEmotionScreen: React.FC = () => {
   const { id } = useLocalSearchParams();
@@ -175,7 +176,6 @@ const EditEmotionScreen: React.FC = () => {
           Cesi<Text style={styles.logoZen}>Zen</Text>
         </Text>
 
-        {/* Date du journal */}
         <Text style={styles.date}>
           {new Date(journal.date_enregistrement).toLocaleDateString("fr-FR", {
             day: "2-digit",
@@ -184,7 +184,6 @@ const EditEmotionScreen: React.FC = () => {
           })}
         </Text>
 
-        {/* Émotion de base */}
         <Text style={styles.label}>Émotion de base</Text>
         <TouchableOpacity
           style={styles.box}
@@ -209,7 +208,6 @@ const EditEmotionScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Émotion avancée */}
         <Text style={styles.label}>Émotion avancée</Text>
         <TouchableOpacity
           style={styles.box}
@@ -239,7 +237,6 @@ const EditEmotionScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Commentaire */}
         <Text style={styles.label}>Commentaire</Text>
         <TextInput
           style={styles.comment}
@@ -250,7 +247,6 @@ const EditEmotionScreen: React.FC = () => {
           multiline
         />
 
-        {/* Bouton d'enregistrement */}
         <TouchableOpacity
           style={styles.saveButton}
           onPress={updateJournalEmotion}
@@ -258,6 +254,7 @@ const EditEmotionScreen: React.FC = () => {
           <Text style={styles.saveButtonText}>Enregistrer</Text>
         </TouchableOpacity>
       </ScrollView>
+      <BottomNavBar />
     </SafeAreaView>
   );
 };
