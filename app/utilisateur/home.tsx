@@ -15,39 +15,7 @@ import BottomNavBar from "../../components/BottomNavBar";
 
 const HomePage: React.FC = () => {
   const router = useRouter();
-  const { authState, isAuthenticated, checkToken } = useAuth();
-  const [loading, setLoading] = useState(true);
   const informations = useInformations();
-
-  useEffect(() => {
-    let isCheck = true;
-
-    (async () => {
-      if (!isAuthenticated) {
-        const isValid = await checkToken();
-        if (isCheck) {
-          setLoading(false);
-          if (!isValid) router.push("/utilisateur/connexion");
-        }
-      } else {
-        setLoading(false);
-      }
-    })();
-
-    return () => {
-      isCheck = false;
-    };
-  }, []);
-
-  if (loading || !authState) {
-    return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.loadingContainer}>
-          <Text>Vérification du token en cours...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.safeArea}>

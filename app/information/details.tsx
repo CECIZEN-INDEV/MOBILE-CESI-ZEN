@@ -15,14 +15,7 @@ const DetailsInformation: React.FC = () => {
 
   useEffect(() => {
     (async () => {
-      const storedAuthState = await AsyncStorage.getItem("auth");
-      if (!storedAuthState) return;
-      const authState = JSON.parse(storedAuthState) as AuthState;
-      if (!authState?.token) return;
-
-      const res = await fetch(`http://localhost:3000/information/${id}`, {
-        headers: { Authorization: `Bearer ${authState.token}` },
-      });
+      const res = await fetch(`http://localhost:3000/information/${id}`, {});
 
       const data = await res.json();
       if (!data) {
