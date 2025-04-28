@@ -13,7 +13,7 @@ const ReportScreen: React.FC = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [report, setReport] = useState<EmotionReport | null>(null);
-  // Etat pour la période sélectionnée ("week", "month", "year")
+  // État pour la période sélectionnée ("week", "month", "year")
   const [selectedPeriod, setSelectedPeriod] = useState<
     "week" | "month" | "year"
   >("week");
@@ -68,82 +68,146 @@ const ReportScreen: React.FC = () => {
     );
   }
 
-  // Fonction de génération du PDF
+  // Fonction de génération du PDF avec le style amélioré (sans la barre verte sous le titre)
   const generatePDF = async () => {
     let html = `<html>
-            <head>
-                <meta charset="utf-8">
-                <title>Rapport des émotions</title>
-                <style>
-                    body { font-family: Arial, sans-serif; padding: 20px; }
-                    h1 { text-align: center; color: #4CAF50; }
-                    h2 { color: #333; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                    th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
-                    th { background-color: #f2f2f2; }
-                </style>
-            </head>
-            <body>
-                <h1>Rapport des Émotions</h1>
-                <p>Exporté le : ${new Date().toLocaleDateString("fr-FR")}</p>
-                <p>Période : ${
-                  selectedPeriod === "week"
-                    ? "Semaine"
-                    : selectedPeriod === "month"
-                    ? "Mois"
-                    : "Année"
-                }</p>
-                <h2>Moyenne des émotions de base</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Émotion</th>
-                            <th>Proportion</th>
-                        </tr>
-                    </thead>
-                    <tbody>`;
+    <head>
+      <meta charset="utf-8">
+      <title>Rapport des émotions</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          background: #fff;
+          margin: 0;
+          padding: 20px;
+        }
+        .header {
+          text-align: center;
+          padding: 10px 0;
+          /* Suppression de la barre verte en retirant border-bottom */
+          margin-bottom: 20px;
+        }
+        .header h1 {
+          font-size: 36px;
+          color: #4CAF50;
+          margin: 0;
+        }
+        .header p {
+          font-size: 16px;
+          color: #333;
+          margin: 5px 0 0 0;
+        }
+        .info {
+          text-align: center;
+          margin-bottom: 20px;
+        }
+        .info p {
+          font-size: 16px;
+          color: #333;
+          margin: 4px 0;
+        }
+        .title {
+          font-size: 22px;
+          font-weight: 600;
+          text-align: center;
+          margin: 20px 0;
+          color: #333;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 30px;
+        }
+        th, td {
+          padding: 12px;
+          border: 1px solid #ddd;
+          text-align: center;
+        }
+        th {
+          background-color: #4CAF50;
+          color: #fff;
+        }
+        tbody tr:nth-child(odd) {
+          background-color: #f9f9f9;
+        }
+        .section-title {
+          font-size: 18px;
+          color: #333;
+          margin-top: 30px;
+          margin-bottom: 10px;
+          text-decoration: underline;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>CesiZen</h1>
+        <p>Rapport des Émotions</p>
+      </div>
+      <div class="info">
+        <p><strong>Date d'export :</strong> ${new Date().toLocaleDateString(
+          "fr-FR"
+        )}</p>
+        <p><strong>Période :</strong> ${
+          selectedPeriod === "week"
+            ? "Semaine"
+            : selectedPeriod === "month"
+            ? "Mois"
+            : "Année"
+        }</p>
+      </div>
+      <div class="section">
+        <p class="section-title">Moyenne des émotions de base</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Émotion</th>
+              <th>Proportion</th>
+            </tr>
+          </thead>
+          <tbody>`;
     if (report && report.average) {
       for (const emotion in report.average) {
-        const proportion = (report.average[emotion] * 100).toFixed(2) + " %";
+        const proportion = report.average[emotion].toFixed(2) + " %";
         html += `<tr>
-                    <td>${emotion}</td>
-                    <td>${proportion}</td>
-                </tr>`;
+                 <td>${emotion}</td>
+                 <td>${proportion}</td>
+               </tr>`;
       }
     }
     html += `</tbody>
-            </table>
-            <h2>Détails des entrées</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Émotion de base</th>
-                        <th>Émotion avancée</th>
-                        <th>Commentaire</th>
-                    </tr>
-                </thead>
-        <tbody>`;
+        </table>
+      </div>
+      <div class="section">
+        <p class="section-title">Détails des entrées</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Émotion de base</th>
+              <th>Commentaire</th>
+            </tr>
+          </thead>
+          <tbody>`;
     if (report && report.data && Array.isArray(report.data)) {
       report.data.forEach((item) => {
         const date = new Date(item.date_enregistrement).toLocaleDateString(
           "fr-FR"
         );
         const base = item.emotion_base?.type_emotion || "";
-        const avance = item.emotion_avance?.type_emotion || "";
         const comment = item.commentaire || "";
         html += `<tr>
-                    <td>${date}</td>
-                    <td>${base}</td>
-                    <td>${avance}</td>
-                    <td>${comment}</td>
-                </tr>`;
+                <td>${date}</td>
+                <td>${base}</td>
+                <td>${comment}</td>
+              </tr>`;
       });
     }
     html += `</tbody>
-                </table>
-            </body>
-        </html>`;
+        </table>
+      </div>
+    </body>
+  </html>`;
 
     try {
       const { uri } = await Print.printToFileAsync({ html });

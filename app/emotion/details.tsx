@@ -131,7 +131,6 @@ const DetailsScreen: React.FC = () => {
         <Text style={styles.label}>Commentaire</Text>
         <Text style={styles.comment}>{journal.commentaire}</Text>
 
-        {/* Bouton de suppression (en rouge) */}
         <TouchableOpacity
           style={styles.deleteButton}
           onPress={() =>

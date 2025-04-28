@@ -5,18 +5,41 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../hooks/useAuth";
 import BottomNavBar from "../../components/BottomNavBar";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { AuthState } from "../../interfaces/AuthState";
 
 const ProfilPage: React.FC = () => {
   const { authState, checkToken, isAuthenticated } = useAuth();
   const utilisateur = authState?.utilisateur;
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const storedAuthState = AsyncStorage.getItem("auth");
+
+  const DeleteUser = async (id: number) => {
+    const storedAuthState = await AsyncStorage.getItem("auth");
+    if (!storedAuthState) return;
+    const authState = JSON.parse(storedAuthState) as AuthState;
+
+    try {
+      await fetch(`http://localhost:3000/utilisateur/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${authState?.token}` },
+      });
+      Alert.alert("Succès", "Votre compte a bien été supprimé.");
+      await AsyncStorage.removeItem("auth");
+      router.push("/utilisateur/connexion");
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Erreur", "La suppression a échoué.");
+    }
+  };
 
   useEffect(() => {
     let isCheck = true;
@@ -69,7 +92,6 @@ const ProfilPage: React.FC = () => {
                 <Text style={styles.boxText}>{utilisateur.email}</Text>
               </View>
             </View>
-
             <TouchableOpacity
               style={styles.updateButton}
               onPress={() =>
@@ -81,6 +103,35 @@ const ProfilPage: React.FC = () => {
             >
               <Ionicons name="create-outline" size={22} color="#fff" />
               <Text style={styles.updateText}>Modification Profil</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() =>
+                Alert.alert(
+                  "Confirmer",
+                  "Voulez-vous vraiment supprimer votre compte ?",
+                  [
+                    { text: "Annuler", style: "cancel" },
+                    {
+                      text: "Oui",
+                      onPress: () => DeleteUser(Number(utilisateur.id)),
+                    },
+                  ]
+                )
+              }
+            >
+              <Ionicons name="trash-outline" size={22} color="#fff" />
+              <Text style={styles.deleteText}>Supprimer</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={async () => {
+                await AsyncStorage.removeItem("auth");
+                router.push("/utilisateur/connexion");
+              }}
+            >
+              <Ionicons name="log-out-outline" size={22} color="#fff" />
+              <Text style={styles.deleteText}>Déconnexion</Text>
             </TouchableOpacity>
           </>
         ) : (
@@ -164,7 +215,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginLeft: 8,
   },
-  // Styles supplémentaires pour le profil
   profileBoxContainer: {
     width: "100%",
     alignItems: "center",
@@ -200,6 +250,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   updateText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginLeft: 8,
+  },
+  deleteButton: {
+    flexDirection: "row",
+    backgroundColor: "#E57373",
+    paddingVertical: 10,
+    paddingHorizontal: 25,
+    borderRadius: 8,
+    marginTop: 20,
+    alignItems: "center",
+  },
+  deleteText: {
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",

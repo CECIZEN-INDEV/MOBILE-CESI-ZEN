@@ -67,13 +67,22 @@ const HomePage: React.FC = () => {
 
         <ScrollView style={styles.scrollView}>
           {informations.map((info) => (
-            <View key={info.id} style={styles.informationContainer}>
+            <TouchableOpacity
+              key={info.id}
+              style={styles.informationContainer}
+              onPress={() =>
+                router.push({
+                  pathname: "/information/details",
+                  params: { id: info.id.toString() },
+                })
+              }
+            >
               <Text style={styles.informationTitle}>{info.titre}</Text>
               <Text style={styles.informationDescription}>{info.contenu}</Text>
               <Text style={styles.informationDate}>
                 {new Date(info.created_at).toLocaleDateString()}
               </Text>
-            </View>
+            </TouchableOpacity>
           ))}
         </ScrollView>
       </View>
