@@ -3,9 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { InformationsType } from "../../interfaces/Information";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import BottomNavBar from "../../components/BottomNavBar";
-import { AuthState } from "../../interfaces/AuthState";
+import { InformationService } from "../../services/informationService";
 
 const DetailsInformation: React.FC = () => {
   const router = useRouter();
@@ -15,17 +14,19 @@ const DetailsInformation: React.FC = () => {
 
   useEffect(() => {
     (async () => {
-      const res = await fetch(`http://localhost:3000/information/${id}`, {});
-
-      const data = await res.json();
-      if (!data) {
+      try {
+        const data = await InformationService.getInformationById(Number(id));
+        if (!data) {
+          router.push("/utilisateur/home");
+          return;
+        }
+        setInformation(data);
+      } catch (error) {
+        console.error("Erreur lors du chargement :", error);
         router.push("/utilisateur/home");
-        return;
       }
-
-      setInformation(data);
     })();
-  }, []);
+  }, [id]);
 
   if (!information) {
     return (

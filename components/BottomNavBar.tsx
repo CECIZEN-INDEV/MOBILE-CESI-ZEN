@@ -20,7 +20,8 @@ const BottomNavBar = () => {
     pathname === "/emotion/report" ||
     pathname === "/emotion/edit" ||
     pathname === "/emotion/details";
-  const isProfil = pathname === "/utilisateur/profil";
+  const isProfil =
+    pathname === "/utilisateur/profil" || pathname === "/utilisateur/connexion";
 
   const handleNavigation = (targetPath: string) => {
     if (pathname !== targetPath) {

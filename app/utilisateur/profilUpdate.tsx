@@ -14,6 +14,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "../../hooks/useAuth";
 import { useRouter } from "expo-router";
 import BottomNavBar from "../../components/BottomNavBar";
+import { UtilisateurService } from "../../services/userService";
 
 const profilUpdate: React.FC = () => {
   const { id } = useLocalSearchParams();
@@ -43,15 +44,10 @@ const profilUpdate: React.FC = () => {
         const authData = JSON.parse(storedAuth);
         if (!authData.token) throw new Error("Token invalide.");
 
-        // Récupération du profil via la route GET
-        const res = await fetch(`http://localhost:3000/utilisateur/${id}`, {
-          headers: {
-            Authorization: `Bearer ${authData.token}`,
-          },
-        });
-        if (!res.ok) throw new Error("Erreur lors du chargement du profil.");
-        const data = await res.json();
-
+        const data = await UtilisateurService.getUtilisateurById(
+          Number(id),
+          authData.token
+        );
         if (isMounted) {
           setNom(data.nom);
           setPrenom(data.prenom);
@@ -71,36 +67,27 @@ const profilUpdate: React.FC = () => {
 
   const updateProfile = async () => {
     setErrorMessage("");
+
     try {
       const storedAuth = await AsyncStorage.getItem("auth");
       if (!storedAuth) throw new Error("Aucun jeton trouvé.");
       const authData = JSON.parse(storedAuth);
-      const res = await fetch(`http://localhost:3000/utilisateur/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authData.token}`,
-        },
-        body: JSON.stringify({
+
+      const updatedUser = await UtilisateurService.updateUtilisateurProfil(
+        Number(id),
+        authData.token,
+        {
           nom,
           prenom,
           email,
-        }),
-      });
-      if (!res.ok) {
-        const errorResponse = await res.json();
-        throw new Error(
-          errorResponse.message || "Erreur lors de la mise à jour du profil."
-        );
-      }
-
-      const updatedUser = await res.json();
+        }
+      );
 
       updateUtilisateur(updatedUser);
 
       alert("Profil mis à jour avec succès !");
-      router.push("utilisateur/profil");
-    } catch (error) {
+      router.push("/utilisateur/profil");
+    } catch (error: any) {
       console.error("Erreur lors de la mise à jour du profil :", error);
       alert(error.message || "Erreur lors de la mise à jour du profil.");
     }

@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -14,6 +15,7 @@ import BottomNavBar from "../../components/BottomNavBar";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AuthState } from "../../interfaces/AuthState";
+import { UtilisateurService } from "../../services/userService";
 
 const ProfilPage: React.FC = () => {
   const { authState, checkToken, isAuthenticated } = useAuth();
@@ -23,21 +25,20 @@ const ProfilPage: React.FC = () => {
   const storedAuthState = AsyncStorage.getItem("auth");
 
   const DeleteUser = async (id: number) => {
-    const storedAuthState = await AsyncStorage.getItem("auth");
-    if (!storedAuthState) return;
-    const authState = JSON.parse(storedAuthState) as AuthState;
-
     try {
-      await fetch(`http://localhost:3000/utilisateur/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${authState?.token}` },
-      });
+      const storedAuthState = await AsyncStorage.getItem("auth");
+      if (!storedAuthState) throw new Error("Aucun token trouvé.");
+
+      const authState = JSON.parse(storedAuthState) as AuthState;
+
+      await UtilisateurService.supprimerUtilisateur(id, authState.token);
+
       Alert.alert("Succès", "Votre compte a bien été supprimé.");
       await AsyncStorage.removeItem("auth");
       router.push("/utilisateur/connexion");
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      Alert.alert("Erreur", "La suppression a échoué.");
+      Alert.alert("Erreur", error.message || "La suppression a échoué.");
     }
   };
 
@@ -68,6 +69,7 @@ const ProfilPage: React.FC = () => {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingContainer}>
           <Text>Vérification du token en cours...</Text>
+          <ActivityIndicator size="large" color="#4CAF50" />
         </View>
       </SafeAreaView>
     );

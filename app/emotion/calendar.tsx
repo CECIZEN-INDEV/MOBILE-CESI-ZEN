@@ -8,6 +8,7 @@ import { JournalEmotion } from "../../interfaces/Emotion";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AuthState } from "../../interfaces/AuthState";
 import BottomNavBar from "../../components/BottomNavBar";
+import { EmotionService } from "../../services/emotionService";
 
 const CalendarScreen: React.FC = () => {
   const router = useRouter();
@@ -16,25 +17,18 @@ const CalendarScreen: React.FC = () => {
   const { authState, isAuthenticated, checkToken } = useAuth();
 
   const fetchJournals = async () => {
-    const storedAuthState = await AsyncStorage.getItem("auth");
-    if (!storedAuthState) {
-      return false;
-    }
-    const authState = JSON.parse(storedAuthState) as AuthState;
-    if (!authState?.token) {
-      return false;
-    }
     try {
-      const res = await fetch(
-        `http://localhost:3000/journal-emotion/user/${authState?.utilisateur.id}`,
-        {
-          headers: { Authorization: `Bearer ${authState?.token}` },
-        }
+      const storedAuthState = await AsyncStorage.getItem("auth");
+      if (!storedAuthState) return;
+      const authState = JSON.parse(storedAuthState) as AuthState;
+
+      const data = await EmotionService.getJournauxUtilisateur(
+        authState.utilisateur.id,
+        authState.token
       );
-      const data = await res.json();
       setJournals(data);
     } catch (error) {
-      console.error(error);
+      console.error("Erreur lors du chargement des journaux :", error);
     }
   };
 
