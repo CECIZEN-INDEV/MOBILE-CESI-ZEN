@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,12 +8,15 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "../../hooks/useAuth";
 import { useRouter } from "expo-router";
 import BottomNavBar from "../../components/BottomNavBar";
+import { UtilisateurService } from "../../services/userService";
 
 const ModificationMotdepasse: React.FC = () => {
   const router = useRouter();
@@ -36,29 +39,15 @@ const ModificationMotdepasse: React.FC = () => {
       setLoading(true);
       const storedAuth = await AsyncStorage.getItem("auth");
       if (!storedAuth) throw new Error("Aucun jeton trouvé.");
-      const authData = JSON.parse(storedAuth);
-      const res = await fetch(
-        `http://localhost:3000/utilisateur/motdepasseOublie`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authData.token}`,
-          },
-          body: JSON.stringify({
-            email: authData.utilisateur.email,
-            olderPassword,
-            newPassword,
-          }),
-        }
-      );
 
-      if (!res.ok) {
-        const errorResponse = await res.json();
-        throw new Error(
-          errorResponse.message || "Erreur lors du changement de mot de passe."
-        );
-      }
+      const authData = JSON.parse(storedAuth);
+
+      await UtilisateurService.modifierMotdepasse({
+        token: authData.token,
+        email: authData.utilisateur.email,
+        olderPassword,
+        newPassword,
+      });
 
       Alert.alert("Succès", "Mot de passe modifié avec succès !");
       router.push("/utilisateur/profil");
@@ -70,55 +59,80 @@ const ModificationMotdepasse: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    let isCheck = true;
+
+    (async () => {
+      if (!isAuthenticated) {
+        const isValid = await checkToken();
+        if (isCheck && !isValid) {
+          router.push("/utilisateur/connexion");
+        }
+      }
+    })();
+
+    return () => {
+      isCheck = false;
+    };
+  }, []);
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.logo}>
-          Cesi<Text style={styles.logoZen}>Zen</Text>
-        </Text>
-        <Text style={styles.title}>Modifier le mot de passe</Text>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 20 : 0}
+      >
+        <ScrollView contentContainerStyle={styles.container}>
+          <Text style={styles.logo}>
+            Cesi<Text style={styles.logoZen}>Zen</Text>
+          </Text>
+          <Text style={styles.title}>Modifier le mot de passe</Text>
 
-        <Text style={styles.label}>Ancien mot de passe</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Ancien mot de passe"
-          value={olderPassword}
-          onChangeText={setOlderPassword}
-          secureTextEntry
-        />
+          <Text style={styles.label}>Ancien mot de passe</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ancien mot de passe"
+            value={olderPassword}
+            onChangeText={setOlderPassword}
+            secureTextEntry
+          />
 
-        <Text style={styles.label}>Nouveau mot de passe</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Nouveau mot de passe"
-          value={newPassword}
-          onChangeText={setNewPassword}
-          secureTextEntry
-        />
+          <Text style={styles.label}>Nouveau mot de passe</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Nouveau mot de passe"
+            value={newPassword}
+            onChangeText={setNewPassword}
+            secureTextEntry
+          />
 
-        <Text style={styles.label}>Confirmer le nouveau mot de passe</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Confirmer le nouveau mot de passe"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          secureTextEntry
-        />
+          <Text style={styles.label}>Confirmer le nouveau mot de passe</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Confirmer le nouveau mot de passe"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry
+          />
 
-        {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
+          {errorMessage ? (
+            <Text style={styles.error}>{errorMessage}</Text>
+          ) : null}
 
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={updatePassword}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text style={styles.saveButtonText}>Changer le mot de passe</Text>
-          )}
-        </TouchableOpacity>
-      </ScrollView>
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={updatePassword}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.saveButtonText}>Changer le mot de passe</Text>
+            )}
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
       <BottomNavBar />
     </SafeAreaView>
   );

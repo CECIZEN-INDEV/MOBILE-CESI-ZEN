@@ -1,21 +1,20 @@
-// app/home.tsx (ou le chemin équivalent)
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { useAuth } from "../../hooks/useAuth";
 import useInformations from "../../components/Informations";
 import BottomNavBar from "../../components/BottomNavBar";
 
 const HomePage: React.FC = () => {
   const router = useRouter();
-  const informations = useInformations();
+  const { informations, loading } = useInformations();
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -34,24 +33,38 @@ const HomePage: React.FC = () => {
         <Text style={styles.title}>Information du jour</Text>
 
         <ScrollView style={styles.scrollView}>
-          {informations.map((info) => (
-            <TouchableOpacity
-              key={info.id}
-              style={styles.informationContainer}
-              onPress={() =>
-                router.push({
-                  pathname: "/information/details",
-                  params: { id: info.id.toString() },
-                })
-              }
-            >
-              <Text style={styles.informationTitle}>{info.titre}</Text>
-              <Text style={styles.informationDescription}>{info.contenu}</Text>
-              <Text style={styles.informationDate}>
-                {new Date(info.created_at).toLocaleDateString()}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {loading ? (
+            <ActivityIndicator
+              size="large"
+              color="#4CAF50"
+              style={{ marginTop: 20 }}
+            />
+          ) : informations.length === 0 ? (
+            <Text style={{ textAlign: "center", marginTop: 20 }}>
+              Aucune information disponible.
+            </Text>
+          ) : (
+            informations.map((info) => (
+              <TouchableOpacity
+                key={info.id}
+                style={styles.informationContainer}
+                onPress={() =>
+                  router.push({
+                    pathname: "/information/details",
+                    params: { id: info.id.toString() },
+                  })
+                }
+              >
+                <Text style={styles.informationTitle}>{info.titre}</Text>
+                <Text style={styles.informationDescription}>
+                  {info.contenu}
+                </Text>
+                <Text style={styles.informationDate}>
+                  {new Date(info.created_at).toLocaleDateString()}
+                </Text>
+              </TouchableOpacity>
+            ))
+          )}
         </ScrollView>
       </View>
 

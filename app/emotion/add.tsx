@@ -14,6 +14,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { EmotionBase, EmotionAvance } from "../../interfaces/Emotion";
 import BottomNavBar from "../../components/BottomNavBar";
+import { EmotionService } from "../../services/emotionService";
 
 const AddEmotionScreen: React.FC = () => {
   const { date } = useLocalSearchParams(); // Récupère la date sélectionnée
@@ -43,19 +44,11 @@ const AddEmotionScreen: React.FC = () => {
       }
 
       try {
-        const storedAuthState = await AsyncStorage.getItem("auth");
-        if (!storedAuthState) return;
-
-        const authState = JSON.parse(storedAuthState);
-        if (!authState?.token) return;
-
-        const resAllBase = await fetch(`http://localhost:3000/emotions-base`, {
-          headers: { Authorization: `Bearer ${authState.token}` },
-        });
-
-        if (!resAllBase.ok) throw new Error("Failed to fetch base emotions");
-        const allBase = await resAllBase.json();
-        setAllEmotionsBase(allBase);
+        const storedAuth = await AsyncStorage.getItem("auth");
+        if (!storedAuth) return;
+        const auth = JSON.parse(storedAuth);
+        const baseEmotions = await EmotionService.getEmotionsBase(auth.token);
+        setAllEmotionsBase(baseEmotions);
       } catch (error) {
         console.error("Erreur lors du chargement des émotions :", error);
       }
@@ -68,21 +61,15 @@ const AddEmotionScreen: React.FC = () => {
     setShowBaseList(false);
 
     try {
-      const storedAuthState = await AsyncStorage.getItem("auth");
-      if (!storedAuthState) return;
-
-      const authState = JSON.parse(storedAuthState);
-      const resAvance = await fetch(
-        `http://localhost:3000/emotions-avancees/emotion/${selectedEmotion.id}`,
-        {
-          headers: { Authorization: `Bearer ${authState.token}` },
-        }
+      const storedAuth = await AsyncStorage.getItem("auth");
+      if (!storedAuth) return;
+      const auth = JSON.parse(storedAuth);
+      const avanceEmotions = await EmotionService.getEmotionsAvanceByBaseId(
+        selectedEmotion.id,
+        auth.token
       );
-
-      if (!resAvance.ok) throw new Error("Failed to fetch advanced emotions");
-      const allAvance = await resAvance.json();
-      setAllEmotionsAvance(allAvance);
-      setEmotionAvance(null); // Réinitialiser l'émotion avancée
+      setAllEmotionsAvance(avanceEmotions);
+      setEmotionAvance(null);
     } catch (error) {
       console.error("Erreur lors du chargement des émotions avancées :", error);
     }
@@ -101,61 +88,45 @@ const AddEmotionScreen: React.FC = () => {
 
   const addEmotion = async () => {
     try {
-      const storedAuthState = await AsyncStorage.getItem("auth");
-      if (!storedAuthState) return;
+      const storedAuth = await AsyncStorage.getItem("auth");
+      if (!storedAuth) return;
+      const auth = JSON.parse(storedAuth);
 
-      let selectedDate = date
+      const selectedDate = date
         ? formatDate(date.toString())
         : new Date().toISOString();
 
-      const authState = JSON.parse(storedAuthState);
-
-      const res = await fetch(`http://localhost:3000/journal-emotion`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authState.token}`,
-        },
-        body: JSON.stringify({
-          utilisateur_id: authState.utilisateur.id,
-          commentaire,
-          emotion_base_id: emotionBase?.id,
-          emotion_avance_id: emotionAvance?.id,
-          date_enregistrement: selectedDate,
-        }),
+      await EmotionService.addJournalEmotion(auth.token, {
+        utilisateur_id: auth.utilisateur.id,
+        emotion_base_id: emotionBase?.id,
+        emotion_avance_id: emotionAvance?.id,
+        commentaire,
+        date_enregistrement: selectedDate,
       });
 
-      if (res.status === 409) {
-        Alert.alert(
-          "Malheureusement...",
-          "Une émotion a déjà été enregistrée pour cette date.",
-          [{ text: "OK" }]
-        );
-        return;
-      }
-      if (!res.ok) throw new Error("Failed to add journal emotion");
       alert("Journal ajouté avec succès !");
       router.push("/utilisateur/home");
-    } catch (error) {
-      console.error("Erreur lors de l'ajout du journal :", error);
-      alert("Erreur lors de l'ajout du journal.");
+    } catch (error: any) {
+      if (error.message.includes("déjà été enregistrée")) {
+        Alert.alert("Malheureusement...", error.message, [{ text: "OK" }]);
+      } else {
+        console.error("Erreur lors de l'ajout du journal :", error);
+        alert("Erreur lors de l'ajout du journal.");
+      }
     }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
-        {/* Logo */}
         <Text style={styles.logo}>
           Cesi<Text style={styles.logoZen}>Zen</Text>
         </Text>
 
-        {/* Affichage de la date sélectionnée */}
         <Text style={styles.date}>
           {date ? date.toString() : "Sélectionne une date"}
         </Text>
 
-        {/* Sélection de l'émotion de base */}
         <Text style={styles.label}>Émotion de base</Text>
         <TouchableOpacity
           style={styles.box}
@@ -180,7 +151,6 @@ const AddEmotionScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Sélection de l'émotion avancée */}
         <Text style={styles.label}>Émotion avancée</Text>
         <TouchableOpacity
           style={styles.box}
@@ -210,7 +180,6 @@ const AddEmotionScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Zone de saisie du commentaire */}
         <Text style={styles.label}>Commentaire</Text>
         <TextInput
           style={styles.comment}
@@ -219,7 +188,6 @@ const AddEmotionScreen: React.FC = () => {
           multiline
         />
 
-        {/* Bouton d'ajout */}
         <TouchableOpacity style={styles.saveButton} onPress={addEmotion}>
           <Text style={styles.saveButtonText}>Ajouter</Text>
         </TouchableOpacity>

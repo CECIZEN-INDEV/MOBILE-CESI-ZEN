@@ -3,14 +3,16 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import BottomNavBar from "../../components/BottomNavBar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Ionicons } from "@expo/vector-icons";
+
+import { EmotionService } from "../../services/emotionService";
 import { AuthState } from "../../interfaces/AuthState";
 import {
-  JournalEmotion,
   EmotionBase,
   EmotionAvance,
+  JournalEmotion,
 } from "../../interfaces/Emotion";
-import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const DetailsScreen: React.FC = () => {
   const router = useRouter();
@@ -21,16 +23,47 @@ const DetailsScreen: React.FC = () => {
     null
   );
 
-  const DeleteJournalEmotion = async (id: number) => {
-    const storedAuthState = await AsyncStorage.getItem("auth");
-    if (!storedAuthState) return;
-    const authState = JSON.parse(storedAuthState) as AuthState;
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const storedAuthState = await AsyncStorage.getItem("auth");
+        if (!storedAuthState) return;
 
+        const authState = JSON.parse(storedAuthState) as AuthState;
+        const token = authState.token;
+
+        const journalData = await EmotionService.getJournalEmotionById(
+          Number(id),
+          token
+        );
+        setJournal(journalData);
+
+        const [emotionBaseData, emotionAvanceData] = await Promise.all([
+          EmotionService.getEmotionBaseById(journalData.emotion_base_id, token),
+          EmotionService.getEmotionAvanceById(
+            journalData.emotion_avance_id,
+            token
+          ),
+        ]);
+
+        setEmotionBase(emotionBaseData);
+        setEmotionAvance(emotionAvanceData);
+      } catch (error) {
+        console.error("Erreur de chargement :", error);
+        router.push("/utilisateur/home");
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleDelete = async () => {
     try {
-      await fetch(`http://localhost:3000/journal-emotion/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${authState?.token}` },
-      });
+      const storedAuthState = await AsyncStorage.getItem("auth");
+      if (!storedAuthState) return;
+
+      const authState = JSON.parse(storedAuthState) as AuthState;
+      await EmotionService.deleteJournalEmotion(Number(id), authState.token);
       Alert.alert("Succès", "L'entrée a bien été supprimée.");
       router.push("/utilisateur/home");
     } catch (error) {
@@ -38,46 +71,6 @@ const DetailsScreen: React.FC = () => {
       Alert.alert("Erreur", "La suppression a échoué.");
     }
   };
-
-  useEffect(() => {
-    (async () => {
-      const storedAuthState = await AsyncStorage.getItem("auth");
-      if (!storedAuthState) return false;
-      const authState = JSON.parse(storedAuthState) as AuthState;
-      if (!authState?.token) return false;
-
-      const resJournal = await fetch(
-        `http://localhost:3000/journal-emotion/${id}`,
-        {
-          headers: { Authorization: `Bearer ${authState?.token}` },
-        }
-      );
-      const dataJournal = await resJournal.json();
-      if (!dataJournal) {
-        router.push("/utilisateur/home");
-        return;
-      }
-      setJournal(dataJournal);
-
-      const [resBase, resAvance] = await Promise.all([
-        fetch(
-          `http://localhost:3000/emotions-base/${dataJournal.emotion_base_id}`,
-          {
-            headers: { Authorization: `Bearer ${authState?.token}` },
-          }
-        ),
-        fetch(
-          `http://localhost:3000/emotions-avancees/${dataJournal.emotion_avance_id}`,
-          {
-            headers: { Authorization: `Bearer ${authState?.token}` },
-          }
-        ),
-      ]);
-
-      setEmotionBase(await resBase.json());
-      setEmotionAvance(await resAvance.json());
-    })();
-  }, []);
 
   if (!journal || !emotionBase || !emotionAvance) {
     return (
@@ -100,15 +93,12 @@ const DetailsScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Logo */}
         <Text style={styles.logo}>
           Cesi<Text style={styles.logoZen}>Zen</Text>
         </Text>
 
-        {/* Date du journal */}
         <Text style={styles.date}>{formattedDate}</Text>
 
-        {/* Bouton d'édition */}
         <TouchableOpacity
           style={styles.editButton}
           onPress={() =>
@@ -121,7 +111,6 @@ const DetailsScreen: React.FC = () => {
           <Ionicons name="create-outline" size={32} />
         </TouchableOpacity>
 
-        {/* Détails de l'émotion */}
         <Text style={styles.label}>Émotion de base</Text>
         <Text style={styles.box}>{emotionBase.type_emotion}</Text>
 
@@ -139,10 +128,7 @@ const DetailsScreen: React.FC = () => {
               "Voulez-vous vraiment supprimer cette entrée ?",
               [
                 { text: "Annuler", style: "cancel" },
-                {
-                  text: "Oui",
-                  onPress: () => DeleteJournalEmotion(Number(id)),
-                },
+                { text: "Oui", onPress: handleDelete },
               ]
             )
           }

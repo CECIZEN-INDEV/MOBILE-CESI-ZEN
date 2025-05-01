@@ -7,37 +7,34 @@ import {
   Image,
   StyleSheet,
   Alert,
+  SafeAreaView,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../hooks/useAuth";
+import BottomNavBar from "../../components/BottomNavBar";
 
 const Connexion: React.FC = () => {
   const [email, setEmail] = useState<string>("");
   const [motDePasse, setMotDePasse] = useState<string>("");
   const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState(true);
 
   const router = useRouter();
   const { login, checkToken, isAuthenticated } = useAuth();
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let isCheck = true;
+    let isMounted = true;
 
     (async () => {
-      if (!isAuthenticated) {
-        const isValid = await checkToken();
-        if (isCheck) {
-          setLoading(false);
-          if (isValid) router.push("/utilisateur/home");
-        }
-      } else {
+      const isValid = isAuthenticated || (await checkToken());
+      if (isMounted) {
         setLoading(false);
-        router.push("/utilisateur/home");
+        if (isValid) router.push("/utilisateur/home");
       }
     })();
 
     return () => {
-      isCheck = false;
+      isMounted = false;
     };
   }, []);
 
@@ -65,10 +62,16 @@ const Connexion: React.FC = () => {
     }
   };
 
-  if (loading) return <Text>Chargement...</Text>;
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text>Chargement...</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Image source={require("../../assets/cesizen.png")} style={styles.logo} />
 
       <TextInput
@@ -102,9 +105,12 @@ const Connexion: React.FC = () => {
           <Text style={styles.link}>Inscription</Text>
         </TouchableOpacity>
       </View>
-    </View>
+
+      <BottomNavBar />
+    </SafeAreaView>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -119,32 +125,31 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
     marginBottom: 40,
   },
-  inputContainer: {
-    flex: 1,
-    width: "100%",
-    justifyContent: "center",
-  },
   input: {
-    width: "100%",
+    alignSelf: "stretch",
     borderWidth: 1,
     borderColor: "#ddd",
     padding: 15,
     borderRadius: 10,
     marginBottom: 15,
+    marginLeft: 30,
+    marginRight: 30,
     fontSize: 16,
     backgroundColor: "#f7f7f7",
   },
   button: {
-    width: "100%",
     backgroundColor: "#4CAF50",
+    width: "50%",
     padding: 15,
     borderRadius: 10,
     alignItems: "center",
-    marginVertical: 10,
+    marginTop: 30,
   },
   buttonText: {
-    color: "white",
-    fontSize: 16,
+    fontSize: 18,
+    color: "#fff",
+    fontWeight: "bold",
+    marginLeft: 8,
   },
   link: {
     color: "#000",
@@ -159,6 +164,7 @@ const styles = StyleSheet.create({
   },
   register: {
     marginTop: 40,
+    alignItems: "center",
   },
 });
 

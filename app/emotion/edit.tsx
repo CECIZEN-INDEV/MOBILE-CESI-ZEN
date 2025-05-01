@@ -8,20 +8,22 @@ import {
   TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { AuthState } from "../../interfaces/AuthState";
 import { useAuth } from "../../hooks/useAuth";
-import { useRouter } from "expo-router";
+import BottomNavBar from "../../components/BottomNavBar";
+import { EmotionService } from "../../services/emotionService";
+import { AuthState } from "../../interfaces/AuthState";
 import {
   JournalEmotion,
   EmotionBase,
   EmotionAvance,
 } from "../../interfaces/Emotion";
-import BottomNavBar from "../../components/BottomNavBar";
 
 const EditEmotionScreen: React.FC = () => {
   const { id } = useLocalSearchParams();
+  const router = useRouter();
+
   const [journal, setJournal] = useState<JournalEmotion | null>(null);
   const [emotionBase, setEmotionBase] = useState<EmotionBase | null>(null);
   const [emotionAvance, setEmotionAvance] = useState<EmotionAvance | null>(
@@ -33,71 +35,94 @@ const EditEmotionScreen: React.FC = () => {
   );
   const [showBaseList, setShowBaseList] = useState(false);
   const [showAvanceList, setShowAvanceList] = useState(false);
-  const { authState, isAuthenticated, checkToken } = useAuth();
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
+
+  const { isAuthenticated, checkToken } = useAuth();
 
   useEffect(() => {
-    let isCheck = true;
+    let isActive = true;
 
-    (async () => {
-      if (!isAuthenticated) {
-        const isValid = await checkToken();
-        if (isCheck) {
-          setLoading(false);
-          if (!isValid) {
-            router.push("/utilisateur/connexion");
-            return;
-          }
-        }
-      } else {
-        setLoading(false);
-      }
+    const fetchData = async () => {
+      const storedAuthState = await AsyncStorage.getItem("auth");
+      if (!storedAuthState) return;
+
+      const authState = JSON.parse(storedAuthState) as AuthState;
+      const token = authState.token;
 
       try {
-        const storedAuthState = await AsyncStorage.getItem("auth");
-        if (!storedAuthState) return;
-
-        const authState = JSON.parse(storedAuthState) as AuthState;
-        if (!authState?.token) return;
-
-        // Récupération du journal
-        const resJournal = await fetch(
-          `http://localhost:3000/journal-emotion/${id}`,
-          {
-            headers: { Authorization: `Bearer ${authState.token}` },
-          }
+        // Vérification token + journal
+        const journalData = await EmotionService.getJournalEmotionById(
+          Number(id),
+          token
         );
-        if (!resJournal.ok) throw new Error("Failed to fetch journal");
-        const dataJournal = await resJournal.json();
-        setJournal(dataJournal);
+        if (!isActive) return;
+        setJournal(journalData);
 
-        // Récupération des émotions de base
-        const resAllBase = await fetch(`http://localhost:3000/emotions-base`, {
-          headers: { Authorization: `Bearer ${authState.token}` },
-        });
-        if (!resAllBase.ok) throw new Error("Failed to fetch base emotions");
-        const allBase = await resAllBase.json();
-        setAllEmotionsBase(allBase);
+        const emotionsBaseList = await EmotionService.getEmotionsBase(token);
+        if (!isActive) return;
+        setAllEmotionsBase(emotionsBaseList);
 
-        // Sélection de l'émotion de base et chargement de ses émotions avancées
-        if (dataJournal.emotion_base_id) {
-          const selectedBaseEmotion = allBase.find(
-            (e: { id: any }) => e.id === dataJournal.emotion_base_id
+        if (journalData.emotion_base_id) {
+          const selected = emotionsBaseList.find(
+            (e) => e.id === journalData.emotion_base_id
           );
-          if (selectedBaseEmotion) {
-            await handleSelectBaseEmotion(selectedBaseEmotion);
-          }
+          if (selected) await handleSelectBaseEmotion(selected, token);
+
+          const emotionAvanceData = await EmotionService.getEmotionAvanceById(
+            journalData.emotion_avance_id,
+            token
+          );
+          setEmotionAvance(emotionAvanceData);
         }
+
+        setEmotionBase(selected || null);
       } catch (error) {
-        console.error("Erreur lors du chargement des émotions :", error);
+        console.error("Erreur lors du chargement :", error);
+      } finally {
+        if (isActive) setLoading(false);
       }
-    })();
+    };
+
+    const verifyAndFetch = async () => {
+      if (!isAuthenticated) {
+        const valid = await checkToken();
+        if (!valid) {
+          router.push("/utilisateur/connexion");
+          return;
+        }
+      }
+      fetchData();
+    };
+
+    verifyAndFetch();
 
     return () => {
-      isCheck = false;
+      isActive = false;
     };
-  }, [id, isAuthenticated, checkToken, router]);
+  }, [id]);
+
+  const handleSelectBaseEmotion = async (
+    emotion: EmotionBase,
+    token: string
+  ) => {
+    setEmotionBase(emotion);
+    setShowBaseList(false);
+    try {
+      const avances = await EmotionService.getEmotionsAvanceByBaseId(
+        emotion.id,
+        token
+      );
+      setAllEmotionsAvance(avances);
+      setEmotionAvance(null);
+    } catch (error) {
+      console.error("Erreur chargement émotions avancées :", error);
+    }
+  };
+
+  const handleSelectAvanceEmotion = (emotion: EmotionAvance) => {
+    setEmotionAvance(emotion);
+    setShowAvanceList(false);
+  };
 
   const updateJournalEmotion = async () => {
     try {
@@ -105,20 +130,14 @@ const EditEmotionScreen: React.FC = () => {
       if (!storedAuthState) return;
 
       const authState = JSON.parse(storedAuthState) as AuthState;
-      const res = await fetch(`http://localhost:3000/journal-emotion/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authState.token}`,
-        },
-        body: JSON.stringify({
-          commentaire: journal?.commentaire,
-          emotion_base_id: emotionBase?.id,
-          emotion_avance_id: emotionAvance?.id,
-        }),
+      const token = authState.token;
+
+      await EmotionService.updateJournalEmotion(Number(id), token, {
+        commentaire: journal?.commentaire || "",
+        emotion_base_id: emotionBase?.id,
+        emotion_avance_id: emotionAvance?.id,
       });
 
-      if (!res.ok) throw new Error("Failed to update journal emotion");
       alert("Journal mis à jour avec succès !");
       router.push("/utilisateur/home");
     } catch (error) {
@@ -127,38 +146,7 @@ const EditEmotionScreen: React.FC = () => {
     }
   };
 
-  // Fonction pour sélectionner une émotion de base et charger ses émotions avancées
-  const handleSelectBaseEmotion = async (selectedEmotion: EmotionBase) => {
-    setEmotionBase(selectedEmotion);
-    setShowBaseList(false);
-
-    try {
-      const storedAuthState = await AsyncStorage.getItem("auth");
-      if (!storedAuthState) return;
-
-      const authState = JSON.parse(storedAuthState) as AuthState;
-      const resAvance = await fetch(
-        `http://localhost:3000/emotions-avancees/emotion/${selectedEmotion.id}`,
-        {
-          headers: { Authorization: `Bearer ${authState?.token}` },
-        }
-      );
-
-      const allAvance = await resAvance.json();
-      setAllEmotionsAvance(allAvance);
-      setEmotionAvance(null);
-    } catch (error) {
-      console.error("Erreur lors du chargement des émotions avancées :", error);
-    }
-  };
-
-  // Fonction pour sélectionner une émotion avancée
-  const handleSelectAvanceEmotion = (selectedEmotion: EmotionAvance) => {
-    setEmotionAvance(selectedEmotion);
-    setShowAvanceList(false);
-  };
-
-  if (!journal) {
+  if (loading || !journal) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingContainer}>
@@ -171,7 +159,6 @@ const EditEmotionScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
-        {/* Logo */}
         <Text style={styles.logo}>
           Cesi<Text style={styles.logoZen}>Zen</Text>
         </Text>
@@ -200,7 +187,12 @@ const EditEmotionScreen: React.FC = () => {
               <TouchableOpacity
                 key={emotion.id}
                 style={styles.dropdownItem}
-                onPress={() => handleSelectBaseEmotion(emotion)}
+                onPress={async () => {
+                  const storedAuthState = await AsyncStorage.getItem("auth");
+                  if (!storedAuthState) return;
+                  const token = JSON.parse(storedAuthState).token;
+                  await handleSelectBaseEmotion(emotion, token);
+                }}
               >
                 <Text>{emotion.type_emotion}</Text>
               </TouchableOpacity>

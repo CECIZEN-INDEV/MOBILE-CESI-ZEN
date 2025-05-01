@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { login as loginService } from "../services/userService";
+import { UtilisateurService } from "../services/userService";
 import { Utilisateur, LoginResponse } from "../interfaces/Utilisateur";
 
 interface AuthState {
@@ -23,13 +23,19 @@ export function useAuth() {
 
   // Connexion
   const login = useCallback(async (email: string, mot_de_passe: string) => {
-    const data: LoginResponse = await loginService(email, mot_de_passe);
+    const data: LoginResponse = await UtilisateurService.login(
+      email,
+      mot_de_passe
+    );
+    console.log("Login data:", data.token);
     const newAuthState = {
       token: data.token,
       utilisateur: data.utilisateur,
     };
     await AsyncStorage.setItem("auth", JSON.stringify(newAuthState));
     setAuthState(newAuthState);
+
+    console.log("Auth state after login:", newAuthState);
   }, []);
 
   // Déconnexion
@@ -62,14 +68,13 @@ export function useAuth() {
 
     try {
       const response = await fetch(
-        "http://localhost:3000/utilisateur/checkToken",
+        "http://192.168.1.14:3000/utilisateur/checkToken",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token: authState.token }),
         }
       );
-
       if (response.status !== 200) {
         await logout();
         return false;

@@ -1,27 +1,36 @@
 import { useState, useEffect } from "react";
 import { InformationsType } from "../interfaces/Information";
 
+const API_URL = "http://192.168.1.14:3000/information";
+
 const Informations = () => {
-  const url = "http://localhost:3000/information";
   const [informations, setInformations] = useState<InformationsType[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchInformations = async () => {
       try {
-        const response = await fetch(url, {
+        const response = await fetch(API_URL, {
           headers: {},
         });
+
+        if (!response.ok) {
+          throw new Error("Erreur lors du chargement des informations");
+        }
+
         const data = await response.json();
         setInformations(data);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Erreur chargement informations :", error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchData();
+    fetchInformations();
   }, []);
 
-  return informations;
+  return { informations, loading };
 };
 
 export default Informations;

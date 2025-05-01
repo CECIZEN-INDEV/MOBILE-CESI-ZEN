@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { UtilisateurService } from "../../services/userService";
 
 const InscriptionPage: React.FC = () => {
   const router = useRouter();
@@ -18,9 +19,7 @@ const InscriptionPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [motDePasse, setMotDePasse] = useState("");
 
-  // Fonction appelée lors du clic sur "S'inscrire"
   const handleInscription = async () => {
-    // Vérification des champs obligatoires
     if (!nom || !prenom || !email || !motDePasse) {
       Alert.alert(
         "Erreur",
@@ -30,31 +29,17 @@ const InscriptionPage: React.FC = () => {
     }
 
     try {
-      // Appel à l'API pour créer l'utilisateur
-      const response = await fetch("http://localhost:3000/utilisateur", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          nom,
-          prenom,
-          email,
-          mot_de_passe: motDePasse,
-        }),
+      await UtilisateurService.inscrireUtilisateur({
+        nom,
+        prenom,
+        email,
+        mot_de_passe: motDePasse,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        Alert.alert("Erreur", errorData.message || "Une erreur est survenue.");
-        return;
-      }
-
       Alert.alert("Succès", "Votre compte a été créé avec succès !");
-      // Redirection vers la page de connexion
       router.push("/utilisateur/connexion");
-    } catch (error) {
-      Alert.alert("Erreur", "Une erreur est survenue pendant l'inscription.");
+    } catch (error: any) {
+      Alert.alert("Erreur", error.message);
     }
   };
 
