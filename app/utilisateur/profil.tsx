@@ -25,6 +25,7 @@ const ProfilPage: React.FC = () => {
   const storedAuthState = AsyncStorage.getItem("auth");
 
   const DeleteUser = async (id: number) => {
+    console.log("Suppression de l'utilisateur avec l'ID :", id);
     try {
       const storedAuthState = await AsyncStorage.getItem("auth");
       if (!storedAuthState) throw new Error("Aucun token trouvé.");
@@ -34,6 +35,7 @@ const ProfilPage: React.FC = () => {
       await UtilisateurService.supprimerUtilisateur(id, authState.token);
 
       Alert.alert("Succès", "Votre compte a bien été supprimé.");
+
       await AsyncStorage.removeItem("auth");
       router.push("/utilisateur/connexion");
     } catch (error: any) {

@@ -27,15 +27,12 @@ export function useAuth() {
       email,
       mot_de_passe
     );
-    console.log("Login data:", data.token);
     const newAuthState = {
       token: data.token,
       utilisateur: data.utilisateur,
     };
     await AsyncStorage.setItem("auth", JSON.stringify(newAuthState));
     setAuthState(newAuthState);
-
-    console.log("Auth state after login:", newAuthState);
   }, []);
 
   // Déconnexion
