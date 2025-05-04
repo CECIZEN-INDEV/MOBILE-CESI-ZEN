@@ -64,7 +64,7 @@ const EditEmotionScreen: React.FC = () => {
 
         if (journalData.emotion_base_id) {
           const selected = emotionsBaseList.find(
-            (e) => e.id === journalData.emotion_base_id
+            (e: { id: any }) => e.id === journalData.emotion_base_id
           );
           if (selected) await handleSelectBaseEmotion(selected, token);
 
@@ -75,7 +75,12 @@ const EditEmotionScreen: React.FC = () => {
           setEmotionAvance(emotionAvanceData);
         }
 
-        setEmotionBase(selected || null);
+        const selected = journalData.emotion_base_id
+          ? emotionsBaseList.find(
+              (e: { id: any }) => e.id === journalData.emotion_base_id
+            )
+          : null;
+        setEmotionBase(selected);
       } catch (error) {
         console.error("Erreur lors du chargement :", error);
       } finally {
