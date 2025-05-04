@@ -262,6 +262,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 20,
     alignItems: "center",
+    width: "60%",
+    justifyContent: "center",
   },
   updateText: {
     color: "#fff",
@@ -277,6 +279,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 20,
     alignItems: "center",
+    width: "60%",
+    justifyContent: "center",
   },
   deleteText: {
     color: "#fff",

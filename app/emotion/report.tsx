@@ -68,7 +68,7 @@ const ReportScreen: React.FC = () => {
     );
   }
 
-  // Fonction de génération du PDF avec le style amélioré (sans la barre verte sous le titre)
+  // Fonction de génération du PDF
   const generatePDF = async () => {
     let html = `<html>
     <head>
