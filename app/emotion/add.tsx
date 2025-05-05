@@ -92,6 +92,15 @@ const AddEmotionScreen: React.FC = () => {
       if (!storedAuth) return;
       const auth = JSON.parse(storedAuth);
 
+      if (!emotionBase && !emotionAvance) {
+        alert("Veuillez sélectionner au moins une émotion.");
+        return;
+      }
+      if (!commentaire) {
+        alert("Veuillez ajouter un commentaire.");
+        return;
+      }
+
       const selectedDate = date
         ? formatDate(date.toString())
         : new Date().toISOString();

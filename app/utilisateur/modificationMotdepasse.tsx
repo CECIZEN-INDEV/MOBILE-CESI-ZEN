@@ -29,9 +29,16 @@ const ModificationMotdepasse: React.FC = () => {
 
   const updatePassword = async () => {
     setErrorMessage("");
-
+    if (!olderPassword || !newPassword || !confirmPassword) {
+      alert("Veuillez remplir tous les champs.");
+      return;
+    }
+    if (newPassword.length < 6) {
+      alert("Le mot de passe doit contenir au moins 6 caractères.");
+      return;
+    }
     if (newPassword !== confirmPassword) {
-      setErrorMessage("Les mots de passe ne correspondent pas.");
+      alert("Les mots de passe ne correspondent pas.");
       return;
     }
 

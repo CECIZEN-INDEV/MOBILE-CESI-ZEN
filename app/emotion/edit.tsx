@@ -130,6 +130,15 @@ const EditEmotionScreen: React.FC = () => {
   };
 
   const updateJournalEmotion = async () => {
+    if (!emotionBase && !emotionAvance) {
+      alert("Veuillez sélectionner au moins une émotion.");
+      return;
+    }
+    if (!journal?.commentaire) {
+      alert("Veuillez ajouter un commentaire.");
+      return;
+    }
+
     try {
       const storedAuthState = await AsyncStorage.getItem("auth");
       if (!storedAuthState) return;

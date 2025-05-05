@@ -66,7 +66,15 @@ const profilUpdate: React.FC = () => {
   }, [id, isAuthenticated, checkToken, router]);
 
   const updateProfile = async () => {
-    setErrorMessage("");
+    if (!nom || !prenom || !email) {
+      alert("Veuillez remplir tous les champs.");
+      return;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      alert("Veuillez entrer une adresse email valide.");
+      return;
+    }
 
     try {
       const storedAuth = await AsyncStorage.getItem("auth");
