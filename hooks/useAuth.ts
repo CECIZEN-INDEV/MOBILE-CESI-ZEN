@@ -65,7 +65,7 @@ export function useAuth() {
 
     try {
       const response = await fetch(
-        "http://192.168.1.14:3000/utilisateur/checkToken",
+        "http://localhost:3000/utilisateur/checkToken",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

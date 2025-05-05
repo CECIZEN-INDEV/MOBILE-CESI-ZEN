@@ -1,6 +1,6 @@
 import { LoginResponse } from "../interfaces/Utilisateur";
 
-const API_URL = "http://192.168.1.14:3000";
+const API_URL = "http://localhost:3000";
 
 export type InscriptionPayload = {
   nom: string;
@@ -69,7 +69,6 @@ export const UtilisateurService = {
   },
 
   inscrireUtilisateur: async (payload: InscriptionPayload) => {
-    console.log("Inscription payload:", payload);
     const response = await fetch(`${API_URL}/utilisateur`, {
       method: "POST",
       headers: {

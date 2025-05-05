@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { InformationsType } from "../interfaces/Information";
 
-const API_URL = "http://192.168.1.14:3000/information";
+const API_URL = "http://localhost:3000/information";
 
 const Informations = () => {
   const [informations, setInformations] = useState<InformationsType[]>([]);
