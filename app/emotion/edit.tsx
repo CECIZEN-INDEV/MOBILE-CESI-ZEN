@@ -134,7 +134,7 @@ const EditEmotionScreen: React.FC = () => {
       alert("Veuillez sélectionner au moins une émotion.");
       return;
     }
-    if (!journal?.commentaire) {
+    if (!journal?.commentaire || journal.commentaire.trim() === "") {
       alert("Veuillez ajouter un commentaire.");
       return;
     }

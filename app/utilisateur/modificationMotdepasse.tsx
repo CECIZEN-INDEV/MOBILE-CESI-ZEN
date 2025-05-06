@@ -33,6 +33,14 @@ const ModificationMotdepasse: React.FC = () => {
       alert("Veuillez remplir tous les champs.");
       return;
     }
+    if (
+      !olderPassword.trim() ||
+      !newPassword.trim() ||
+      !confirmPassword.trim()
+    ) {
+      alert("Veuillez remplir tous les champs.");
+      return;
+    }
     if (newPassword.length < 6) {
       alert("Le mot de passe doit contenir au moins 6 caractères.");
       return;

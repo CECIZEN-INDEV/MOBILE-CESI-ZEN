@@ -96,7 +96,7 @@ const AddEmotionScreen: React.FC = () => {
         alert("Veuillez sélectionner au moins une émotion.");
         return;
       }
-      if (!commentaire) {
+      if (!commentaire || commentaire.trim() === "") {
         alert("Veuillez ajouter un commentaire.");
         return;
       }

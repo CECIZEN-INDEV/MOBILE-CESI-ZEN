@@ -70,7 +70,10 @@ const profilUpdate: React.FC = () => {
       alert("Veuillez remplir tous les champs.");
       return;
     }
-
+    if (!nom.trim() || !prenom.trim() || !email.trim()) {
+      alert("Veuillez remplir tous les champs.");
+      return;
+    }
     if (!/\S+@\S+\.\S+/.test(email)) {
       alert("Veuillez entrer une adresse email valide.");
       return;

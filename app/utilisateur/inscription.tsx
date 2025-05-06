@@ -27,6 +27,21 @@ const InscriptionPage: React.FC = () => {
       );
       return;
     }
+    if (motDePasse.length < 6) {
+      Alert.alert(
+        "Erreur",
+        "Le mot de passe doit contenir au moins 6 caractères."
+      );
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      Alert.alert("Erreur", "Veuillez entrer une adresse email valide.");
+      return;
+    }
+    if (!nom.trim() || !prenom.trim()) {
+      Alert.alert("Erreur", "Veuillez renseigner votre nom et prénom.");
+      return;
+    }
 
     try {
       await UtilisateurService.inscrireUtilisateur({
