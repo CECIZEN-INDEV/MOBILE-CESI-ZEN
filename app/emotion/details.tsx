@@ -64,7 +64,7 @@ const DetailsScreen: React.FC = () => {
 
       const authState = JSON.parse(storedAuthState) as AuthState;
       await EmotionService.deleteJournalEmotion(Number(id), authState.token);
-      Alert.alert("Succès", "L'entrée a bien été supprimée.");
+      Alert.alert("Succès", "L'émotion de ce jour a bien été supprimée.");
       router.push("/utilisateur/home");
     } catch (error) {
       console.error(error);

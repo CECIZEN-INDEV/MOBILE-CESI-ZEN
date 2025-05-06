@@ -43,6 +43,10 @@ const Connexion: React.FC = () => {
       setError("Veuillez remplir tous les champs.");
       return false;
     }
+    if (email.trim() === "" || motDePasse.trim() === "") {
+      setError("Veuillez remplir tous les champs.");
+      return false;
+    }
     if (!email.includes("@") || !email.includes(".")) {
       setError("Veuillez entrer un email valide.");
       return false;

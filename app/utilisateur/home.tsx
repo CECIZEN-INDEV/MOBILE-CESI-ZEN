@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -11,10 +11,24 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import useInformations from "../../components/Informations";
 import BottomNavBar from "../../components/BottomNavBar";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const HomePage: React.FC = () => {
   const router = useRouter();
   const { informations, loading } = useInformations();
+
+  const [prenom, setPrenom] = useState<string>("");
+
+  useEffect(() => {
+    const fetchAuth = async () => {
+      const storedAuth = await AsyncStorage.getItem("auth");
+      if (!storedAuth)
+        throw new Error("Aucun jeton d'authentification trouvé.");
+      const authData = JSON.parse(storedAuth);
+      setPrenom(authData.utilisateur?.prenom || "utilisateur");
+    };
+    fetchAuth();
+  }, []);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -26,7 +40,7 @@ const HomePage: React.FC = () => {
           onPress={() => router.push("/emotion/add")}
         >
           <Text style={styles.emotionText}>
-            Que ressentez-vous aujourd'hui ?
+            Que ressentez-vous aujourd'hui{prenom ? `, ${prenom}` : ""} ?
           </Text>
         </TouchableOpacity>
 
