@@ -77,6 +77,10 @@ export const UtilisateurService = {
       body: JSON.stringify(payload),
     });
 
+    if (response.status === 400) {
+      throw new Error("Email invalide ou déjà utilisé.");
+    }
+
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || "Une erreur est survenue.");
@@ -100,11 +104,13 @@ export const UtilisateurService = {
       body: JSON.stringify({ email, olderPassword, newPassword }),
     });
 
+    if (response.status === 401) {
+      throw new Error("Mot de passe incorrect.");
+    }
+
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(
-        errorData.message || "Erreur lors du changement de mot de passe."
-      );
+      throw new Error("Erreur lors du changement de mot de passe.");
     }
 
     return await response.json();

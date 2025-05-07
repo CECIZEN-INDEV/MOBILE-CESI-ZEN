@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   emotionText: {
-    fontSize: 18,
+    fontSize: 17,
     color: "#fff",
     fontWeight: "bold",
     marginLeft: 8,

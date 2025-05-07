@@ -45,6 +45,10 @@ const ModificationMotdepasse: React.FC = () => {
       alert("Le mot de passe doit contenir au moins 6 caractères.");
       return;
     }
+    if (olderPassword === newPassword) {
+      alert("Le nouveau mot de passe doit être différent de l'ancien.");
+      return;
+    }
     if (newPassword !== confirmPassword) {
       alert("Les mots de passe ne correspondent pas.");
       return;
@@ -67,7 +71,6 @@ const ModificationMotdepasse: React.FC = () => {
       Alert.alert("Succès", "Mot de passe modifié avec succès !");
       router.push("/utilisateur/profil");
     } catch (error: any) {
-      console.error("Erreur modification mot de passe:", error);
       setErrorMessage(error.message || "Erreur inconnue.");
     } finally {
       setLoading(false);
