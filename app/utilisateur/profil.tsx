@@ -25,7 +25,6 @@ const ProfilPage: React.FC = () => {
   const storedAuthState = AsyncStorage.getItem("auth");
 
   const DeleteUser = async (id: number) => {
-    console.log("Suppression de l'utilisateur avec l'ID :", id);
     try {
       const storedAuthState = await AsyncStorage.getItem("auth");
       if (!storedAuthState) throw new Error("Aucun token trouvé.");

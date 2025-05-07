@@ -21,7 +21,11 @@ const BottomNavBar = () => {
     pathname === "/emotion/edit" ||
     pathname === "/emotion/details";
   const isProfil =
-    pathname === "/utilisateur/profil" || pathname === "/utilisateur/connexion";
+    pathname === "/utilisateur/profil" ||
+    pathname === "/utilisateur/connexion" ||
+    pathname === "/utilisateur/profilUpdate" ||
+    pathname === "/utilisateur/inscription" ||
+    pathname === "/utilisateur/modificationMotdepasse";
 
   const handleNavigation = (targetPath: string) => {
     if (pathname !== targetPath) {
